@@ -9,7 +9,7 @@ type Account struct {
 	saldo float64
 }
 
-var idContador = 0
+var idContador = 1
 
 func NewAccount() *Account {
 	newAccount := &Account{idContador, 0.0}

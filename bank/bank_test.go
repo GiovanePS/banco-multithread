@@ -6,17 +6,27 @@ import (
 
 func TestGetAccount(t *testing.T) {
 	bank := NewBank()
-	want := bank.CreateAccount().Id()
-	account, err := bank.GetAccount(0)
-	if err != nil {
-		t.Fatal(err)
-	}
 
-	got := account.Id()
+	t.Run("Testar sucesso ao pegar uma conta", func(t *testing.T) {
+		want := bank.CreateAccount().Id()
+		account, err := bank.GetAccount(1)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	if got != want {
-		t.Errorf("got %q want %q", got, want)
-	}
+		got := account.Id()
+
+		if got != want {
+			t.Errorf("got %q want %q", got, want)
+		}
+	})
+
+	t.Run("Testar falha ao tentar pegar uma conta inexistente", func(t *testing.T) {
+		_, err := bank.GetAccount(1000)
+		if err == nil {
+			t.Errorf("Erro não retornado ao pegar um usuário inexistente.")
+		}
+	})
 }
 
 func TestDepositarOuSacar(t *testing.T) {
@@ -38,7 +48,7 @@ func TestDepositarOuSacar(t *testing.T) {
 	})
 
 	t.Run("Falha ao depositar em uma conta que não existe", func(t *testing.T) {
-		err := bank.DepositarOuSacar(2, 0)
+		err := bank.DepositarOuSacar(1000, 0)
 		if err == nil {
 			t.Errorf("Erro não retornado em uma operação inválida.")
 		}

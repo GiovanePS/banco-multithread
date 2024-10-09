@@ -66,14 +66,14 @@ func (b *Bank) GetAccount(accountId int) (*account.Account, error) {
 // o valor de depósito (um número real, que pode ser positivo ou negativo). Note
 // que esta operação pode ser executada tanto para depósitos quanto saques,
 // dependendo se o valor de depósito é positivo ou negativo;
-func (b *Bank) DepositarOuSacar(accountId int, valor float64) error {
+func (b *Bank) DepositarOuSacar(accountId int, value float64) error {
 	acc, err := b.GetAccount(accountId)
 	if err != nil {
 		return err
 	}
 
-	if valor <= 0 {
-		err := acc.Sacar(valor)
+	if value <= 0 {
+		err := acc.Sacar(value)
 		if err != nil {
 			return err
 		}
@@ -81,7 +81,7 @@ func (b *Bank) DepositarOuSacar(accountId int, valor float64) error {
 		return nil
 	}
 
-	err = acc.Depositar(valor)
+	err = acc.Depositar(value)
 	if err != nil {
 		return err
 	}
@@ -89,6 +89,27 @@ func (b *Bank) DepositarOuSacar(accountId int, valor float64) error {
 	return nil
 }
 
-func (b *Bank) Transferir(sourceAccount *account.Account, destAccount *account.Account) error {
+func (b *Bank) Transferir(sourceAccount int, destAccount int, value float64) error {
+	accSource, err := b.GetAccount(sourceAccount)
+	if err != nil {
+		return err
+	}
+
+	accDest, err := b.GetAccount(destAccount)
+	if err != nil {
+		return err
+	}
+
+	err = accSource.Sacar(value)
+	if err != nil {
+		return err
+	}
+
+	err = accDest.Depositar(value)
+	if err != nil {
+		accSource.Depositar(value)
+		return err
+	}
+
 	return nil
 }
