@@ -2,8 +2,6 @@ package bank
 
 import (
 	"fmt"
-
-	"github.com/GiovanePS/banco-multithread/account"
 )
 
 type Bank struct {
@@ -12,8 +10,42 @@ type Bank struct {
 }
 
 type Node struct {
-	account *account.Account
+	account *Account
 	next    *Node
+}
+
+type Account struct {
+	id    int
+	saldo float64
+}
+
+func newAccount(idContador int) *Account {
+	newAccount := &Account{idContador, 0.0}
+	idContador++
+	return newAccount
+}
+
+func (a *Account) depositar(valor float64) error {
+	if valor < 0 {
+		return fmt.Errorf("Só é possível realizar depósitos de valores positivos")
+	}
+
+	a.saldo += valor
+	return nil
+}
+
+func (a *Account) sacar(valor float64) error {
+	// absolute value
+	if valor < 0 {
+		valor = -valor
+	}
+
+	if a.saldo < valor {
+		return fmt.Errorf("Saldo insuficiente para sacar R$ %v", valor)
+	}
+
+	a.saldo -= valor
+	return nil
 }
 
 func NewBank() *Bank {
@@ -30,9 +62,9 @@ func (b *Bank) Id() int {
 
 var idCountContas = 1
 
-func (b *Bank) CreateAccount() *account.Account {
+func (b *Bank) CreateAccount() *Account {
 	if b.headlistAccounts.account == nil {
-		newAccount := account.NewAccount(idCountContas)
+		newAccount := newAccount(idCountContas)
 		b.headlistAccounts.account = newAccount
 		return newAccount
 	}
@@ -40,7 +72,7 @@ func (b *Bank) CreateAccount() *account.Account {
 	r := b.headlistAccounts
 	for {
 		if r.next == nil {
-			newAccount := account.NewAccount(idCountContas)
+			newAccount := newAccount(idCountContas)
 			r.next = &Node{account: newAccount}
 			return newAccount
 		}
@@ -49,10 +81,10 @@ func (b *Bank) CreateAccount() *account.Account {
 	}
 }
 
-func (b *Bank) GetAccount(accountId int) (*account.Account, error) {
+func (b *Bank) GetAccount(accountId int) (*Account, error) {
 	r := b.headlistAccounts
 	for {
-		if r.account.Id() == accountId {
+		if r.account.id == accountId {
 			return r.account, nil
 		}
 
@@ -75,7 +107,7 @@ func (b *Bank) DepositarOuSacar(accountId int, value float64) error {
 	}
 
 	if value <= 0 {
-		err := acc.Sacar(value)
+		err := acc.sacar(value)
 		if err != nil {
 			return err
 		}
@@ -83,7 +115,7 @@ func (b *Bank) DepositarOuSacar(accountId int, value float64) error {
 		return nil
 	}
 
-	err = acc.Depositar(value)
+	err = acc.depositar(value)
 	if err != nil {
 		return err
 	}
@@ -105,14 +137,14 @@ func (b *Bank) Transferir(sourceAccount int, destAccount int, value float64) err
 		return err
 	}
 
-	err = accSource.Sacar(value)
+	err = accSource.sacar(value)
 	if err != nil {
 		return err
 	}
 
-	err = accDest.Depositar(value)
+	err = accDest.depositar(value)
 	if err != nil {
-		accSource.Depositar(value)
+		accSource.depositar(value)
 		return err
 	}
 
