@@ -28,9 +28,11 @@ func (b *Bank) Id() int {
 	return b.id
 }
 
+var idCountContas = 1
+
 func (b *Bank) CreateAccount() *account.Account {
 	if b.headlistAccounts.account == nil {
-		newAccount := account.NewAccount()
+		newAccount := account.NewAccount(idCountContas)
 		b.headlistAccounts.account = newAccount
 		return newAccount
 	}
@@ -38,7 +40,7 @@ func (b *Bank) CreateAccount() *account.Account {
 	r := b.headlistAccounts
 	for {
 		if r.next == nil {
-			newAccount := account.NewAccount()
+			newAccount := account.NewAccount(idCountContas)
 			r.next = &Node{account: newAccount}
 			return newAccount
 		}
@@ -89,6 +91,9 @@ func (b *Bank) DepositarOuSacar(accountId int, value float64) error {
 	return nil
 }
 
+// Dadas duas contas bancárias, origem e destino, e um valor de transferência, esta
+// operação deve debitar o valor de transferência da conta de origem e somar este
+// valor na conta destino;
 func (b *Bank) Transferir(sourceAccount int, destAccount int, value float64) error {
 	accSource, err := b.GetAccount(sourceAccount)
 	if err != nil {

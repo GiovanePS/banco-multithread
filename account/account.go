@@ -9,9 +9,7 @@ type Account struct {
 	saldo float64
 }
 
-var idContador = 1
-
-func NewAccount() *Account {
+func NewAccount(idContador int) *Account {
 	newAccount := &Account{idContador, 0.0}
 	idContador++
 	return newAccount

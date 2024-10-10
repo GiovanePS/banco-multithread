@@ -3,7 +3,7 @@ package account
 import "testing"
 
 func TestSaldo(t *testing.T) {
-	newAccount := NewAccount()
+	newAccount := NewAccount(1)
 	got := newAccount.Saldo()
 	want := 0.0
 
