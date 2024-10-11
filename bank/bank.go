@@ -7,6 +7,7 @@ import (
 type Bank struct {
 	id               int
 	headlistAccounts *Node
+	idCountContas    int
 }
 
 type Node struct {
@@ -21,7 +22,6 @@ type Account struct {
 
 func newAccount(idContador int) *Account {
 	newAccount := &Account{idContador, 0.0}
-	idContador++
 	return newAccount
 }
 
@@ -60,11 +60,10 @@ func (b *Bank) Id() int {
 	return b.id
 }
 
-var idCountContas = 1
-
 func (b *Bank) CreateAccount() *Account {
 	if b.headlistAccounts.account == nil {
-		newAccount := newAccount(idCountContas)
+		b.idCountContas++
+		newAccount := newAccount(b.idCountContas)
 		b.headlistAccounts.account = newAccount
 		return newAccount
 	}
@@ -72,7 +71,8 @@ func (b *Bank) CreateAccount() *Account {
 	r := b.headlistAccounts
 	for {
 		if r.next == nil {
-			newAccount := newAccount(idCountContas)
+			b.idCountContas++
+			newAccount := newAccount(b.idCountContas)
 			r.next = &Node{account: newAccount}
 			return newAccount
 		}

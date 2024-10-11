@@ -79,10 +79,31 @@ func TestDepositarOuSacar(t *testing.T) {
 func TestTransferir(t *testing.T) {
 	t.Run("Sucesso ao transferir", func(t *testing.T) {
 		bank := NewBank()
-		acc := bank.CreateAccount()
+		acc1 := bank.CreateAccount()
+		err := bank.DepositarOuSacar(1, 10)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-		if acc != nil {
-			t.Errorf("Erro!")
+		acc2 := bank.CreateAccount()
+		err = bank.DepositarOuSacar(2, 10)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		bank.Transferir(1, 2, 5)
+		got := acc1.saldo
+		want := 5.0
+
+		if got != want {
+			t.Errorf("Saldo do remetente da transferência incorreto: got: %f, want: %f", got, want)
+		}
+
+		got = acc2.saldo
+		want = 15.0
+
+		if got != want {
+			t.Errorf("Saldo do destinatário da transferência incorreto: got: %f, want: %f", got, want)
 		}
 	})
 }
