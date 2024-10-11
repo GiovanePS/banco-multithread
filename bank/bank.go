@@ -15,8 +15,6 @@ type Node struct {
 	next    *Node
 }
 
-// TODO: COLOCAR CONTA EM OUTRO ARQUIVO NESSE PACKAGE
-
 func NewBank() *Bank {
 	newBank := &Bank{
 		headlistAccounts: &Node{},
@@ -51,6 +49,10 @@ func (b *Bank) CreateAccount() *Account {
 }
 
 func (b *Bank) GetAccount(accountId int) (*Account, error) {
+	if b.headlistAccounts.account == nil {
+		return nil, fmt.Errorf("Nenhuma conta existente.")
+	}
+
 	r := b.headlistAccounts
 	for {
 		if r.account.id == accountId {
@@ -118,4 +120,24 @@ func (b *Bank) Transferir(sourceAccount int, destAccount int, value float64) err
 	}
 
 	return nil
+}
+
+// Esta operação gera um balanço geral de todas as contas, imprimindo na tela cada
+// conta e o seu respectivo valor no momento em que a operação foi inicializada.
+// Note que o balanço geral apresenta uma “fotografia” instantânea do estado das contas.
+func (b *Bank) BalancoGeral() error {
+	if b.headlistAccounts.account == nil {
+		return fmt.Errorf("Nenhuma conta existente.")
+	}
+
+	r := b.headlistAccounts
+	for {
+		fmt.Printf("Account ID: %d\tAccount Balance: %.2f\n", r.account.id, r.account.saldo)
+
+		if r.next == nil {
+			return nil
+		}
+
+		r = r.next
+	}
 }

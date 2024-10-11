@@ -5,9 +5,12 @@ import (
 )
 
 func TestGetAccount(t *testing.T) {
-	bank := NewBank()
+	setup := func() *Bank {
+		return NewBank()
+	}
 
 	t.Run("Sucesso ao pegar uma conta", func(t *testing.T) {
+		bank := setup()
 		want := bank.CreateAccount().id
 		account, err := bank.GetAccount(1)
 		if err != nil {
@@ -21,7 +24,16 @@ func TestGetAccount(t *testing.T) {
 		}
 	})
 
+	t.Run("Falhar ao tentar pegar uma conta com banco sem conta alguma", func(t *testing.T) {
+		bank := setup()
+		_, err := bank.GetAccount(1)
+		if err == nil {
+			t.Errorf("Erro não retornado ao pegar uma conta em um banco vazio.")
+		}
+	})
+
 	t.Run("Falhar ao tentar pegar uma conta inexistente", func(t *testing.T) {
+		bank := setup()
 		_, err := bank.GetAccount(1000)
 		if err == nil {
 			t.Errorf("Erro não retornado ao pegar um usuário inexistente.")
