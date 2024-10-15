@@ -2,6 +2,14 @@ package bank
 
 import (
 	"fmt"
+	"time"
+)
+
+// Tempo em milisegundos
+var (
+	delayOfDepositarOuSacar = 200
+	delayOfTransferir       = 300
+	delayOfBalancoGeral     = 500
 )
 
 type Bank struct {
@@ -72,6 +80,7 @@ func (b *Bank) GetAccount(accountId int) (*Account, error) {
 // que esta operação pode ser executada tanto para depósitos quanto saques,
 // dependendo se o valor de depósito é positivo ou negativo;
 func (b *Bank) DepositarOuSacar(accountId int, value float64) error {
+	time.Sleep(time.Millisecond * time.Duration(delayOfDepositarOuSacar))
 	acc, err := b.GetAccount(accountId)
 	if err != nil {
 		return err
@@ -98,6 +107,7 @@ func (b *Bank) DepositarOuSacar(accountId int, value float64) error {
 // operação deve debitar o valor de transferência da conta de origem e somar este
 // valor na conta destino;
 func (b *Bank) Transferir(sourceAccount int, destAccount int, value float64) error {
+	time.Sleep(time.Millisecond * time.Duration(delayOfTransferir))
 	accSource, err := b.GetAccount(sourceAccount)
 	if err != nil {
 		return err
@@ -126,6 +136,7 @@ func (b *Bank) Transferir(sourceAccount int, destAccount int, value float64) err
 // conta e o seu respectivo valor no momento em que a operação foi inicializada.
 // Note que o balanço geral apresenta uma “fotografia” instantânea do estado das contas.
 func (b *Bank) BalancoGeral() error {
+	time.Sleep(time.Millisecond * time.Duration(delayOfBalancoGeral))
 	if b.headlistAccounts.account == nil {
 		return fmt.Errorf("Nenhuma conta existente.")
 	}
