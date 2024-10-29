@@ -12,6 +12,9 @@ var (
 	delayOfBalancoGeral     = 500
 )
 
+// O serviço deve manter informação sobre contas de usuários. Cada conta
+// de usuário tem um identificador da conta (um número inteiro positivo)
+// e um saldo atual (um número real, que pode ser positivo ou negativo).
 type Bank struct {
 	id               int
 	headlistAccounts *Node
