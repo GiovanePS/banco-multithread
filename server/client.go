@@ -9,30 +9,32 @@ type Request struct {
 	account1  int
 	account2  int // Se operação necessitar de outra conta
 	operation int
-	amount    float64
+	amount    int
 }
 
 type Client struct{}
 
-func (c *Client) start(chRequests chan Request) {
-	for {
-		delay := rand.Intn(3) + 1
-		time.Sleep(time.Duration(delay))
-		r := Request{}
-		c.raffAccounts(r)
-		chRequests <- r
-		time.Sleep(time.Duration(delay))
+func (c *Client) start(queueRequests chan *Request, numAccounts int) {
+	for CONTINUE {
+		delay := rand.Intn(5)
+		time.Sleep(time.Duration(delay) * time.Second)
+		r := &Request{}
+		c.raffleAccounts(r, numAccounts)
+		c.raffleOperation(r)
+		queueRequests <- r
 	}
 }
 
-func (c *Client) raffAccounts(numAccounts int, r Request) {
+func (c *Client) raffleAccounts(r *Request, numAccounts int) {
 	acc1 := rand.Intn(numAccounts)
 	acc2 := rand.Intn(numAccounts)
 	r.account1 = acc1
 	r.account2 = acc2
 }
 
-func (c *Client) raffOperation() int {
+func (c *Client) raffleOperation(r *Request) {
 	numOperations := 3
-	return rand.Intn(numOperations)
+	r.operation = rand.Intn(numOperations) + 1
+	value := 1000
+	r.amount = rand.Intn(value*2) - value // Entre -1000 a 1000
 }

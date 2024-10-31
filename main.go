@@ -6,5 +6,5 @@ import (
 
 func main() {
 	s := server.CreateServerThread(10)
-	s.InitServerThread()
+	s.StartServerThread()
 }

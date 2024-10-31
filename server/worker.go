@@ -1,44 +1,35 @@
 package server
 
 import (
-	"sync"
+	"fmt"
 
 	"github.com/GiovanePS/banco-multithread/bank"
 )
 
-// Job representa uma operação de banco.
+const (
+	DepositarOuSacar int = iota + 1
+	Transferir
+	BalancoGeral
+)
 
-type Worker struct {
-	id   int
-	cond *sync.Cond
-}
+type Worker struct{}
 
 func newWorker(id int) *Worker {
-	newWorker := &Worker{
-		id:   id,
-		cond: sync.NewCond(&sync.Mutex{}),
-	}
-
-	return newWorker
+	return &Worker{}
 }
 
-func (w *Worker) start(bank *bank.Bank, jobQueue <-chan Request) {
-	for job := range jobQueue {
-		w.cond.L.Lock()
-		w.cond.Signal()
-		w.cond.L.Unlock()
-	}
-}
+func (w *Worker) runJob(bank *bank.Bank, request *Request) {
+	switch request.operation {
+	case DepositarOuSacar:
+		fmt.Println("Depositando ou sancando...")
+		// bank.DepositarOuSacar()
 
-func (w *Worker) runJob(bank bank.Bank, operation int) {
-	switch operation {
-	case 1:
-		bank.DepositarOuSacar()
+	case Transferir:
+		fmt.Println("Transferindo...")
+		// bank.Transferir()
 
-	case 2:
-		bank.Transferir()
-
-	case 3:
-		bank.BalancoGeral()
+	case BalancoGeral:
+		fmt.Println("Balançeando geral...")
+		// bank.BalancoGeral()
 	}
 }
