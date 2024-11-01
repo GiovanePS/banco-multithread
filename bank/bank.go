@@ -17,18 +17,18 @@ var (
 // e um saldo atual (um número real, que pode ser positivo ou negativo).
 type Bank struct {
 	id               int
-	headlistAccounts *Node
+	headlistAccounts *NodeAccount
 	idCountContas    int
 }
 
-type Node struct {
+type NodeAccount struct {
 	account *Account
-	next    *Node
+	next    *NodeAccount
 }
 
 func NewBank() *Bank {
 	newBank := &Bank{
-		headlistAccounts: &Node{},
+		headlistAccounts: &NodeAccount{},
 	}
 
 	return newBank
@@ -51,7 +51,7 @@ func (b *Bank) CreateAccount() *Account {
 		if r.next == nil {
 			b.idCountContas++
 			newAccount := newAccount(b.idCountContas)
-			r.next = &Node{account: newAccount}
+			r.next = &NodeAccount{account: newAccount}
 			return newAccount
 		}
 
@@ -82,34 +82,39 @@ func (b *Bank) GetAccount(accountId int) (*Account, error) {
 // o valor de depósito (um número real, que pode ser positivo ou negativo). Note
 // que esta operação pode ser executada tanto para depósitos quanto saques,
 // dependendo se o valor de depósito é positivo ou negativo;
-func (b *Bank) DepositarOuSacar(accountId int, value float64) error {
+func (b *Bank) DepositarOuSacar(accountId int, valor float64) error {
 	time.Sleep(time.Millisecond * time.Duration(delayOfDepositarOuSacar))
 	acc, err := b.GetAccount(accountId)
+	acc.mutex.Lock()
+	defer acc.mutex.Unlock()
 	if err != nil {
+		fmt.Println(err)
 		return err
 	}
 
-	if value <= 0 {
-		err := acc.sacar(value)
+	if valor <= 0 {
+		err := acc.sacar(valor)
 		if err != nil {
 			return err
 		}
 
+		fmt.Printf("Sacando na conta %d: %f\n", accountId, valor)
 		return nil
 	}
 
-	err = acc.depositar(value)
+	err = acc.depositar(valor)
 	if err != nil {
 		return err
 	}
 
+	fmt.Printf("Depositando na conta %d: %f\n", accountId, valor)
 	return nil
 }
 
 // Dadas duas contas bancárias, origem e destino, e um valor de transferência, esta
 // operação deve debitar o valor de transferência da conta de origem e somar este
 // valor na conta destino;
-func (b *Bank) Transferir(sourceAccount int, destAccount int, value float64) error {
+func (b *Bank) Transferir(sourceAccount int, destAccount int, valor float64) error {
 	time.Sleep(time.Millisecond * time.Duration(delayOfTransferir))
 	accSource, err := b.GetAccount(sourceAccount)
 	if err != nil {
@@ -121,17 +126,30 @@ func (b *Bank) Transferir(sourceAccount int, destAccount int, value float64) err
 		return err
 	}
 
-	err = accSource.sacar(value)
+	for {
+		if accSource.mutex.TryLock() {
+			if accDest.mutex.TryLock() {
+				defer accSource.mutex.Unlock()
+				defer accDest.mutex.Unlock()
+				break
+			} else {
+				accSource.mutex.Unlock()
+			}
+		}
+	}
+
+	err = accSource.sacar(valor)
 	if err != nil {
 		return err
 	}
 
-	err = accDest.depositar(value)
+	err = accDest.depositar(valor)
 	if err != nil {
-		accSource.depositar(value)
+		accSource.depositar(valor)
 		return err
 	}
 
+	fmt.Printf("Transferência: %d -> %d : %f\n", accSource.id, accDest.id, valor)
 	return nil
 }
 

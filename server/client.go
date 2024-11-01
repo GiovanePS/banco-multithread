@@ -14,20 +14,20 @@ type Request struct {
 
 type Client struct{}
 
-func (c *Client) start(queueRequests chan *Request, numAccounts int) {
+func (c *Client) start(qr *QueueRequests, numAccounts int) {
 	for CONTINUE {
 		delay := rand.Intn(5)
 		time.Sleep(time.Duration(delay) * time.Second)
 		r := &Request{}
 		c.raffleAccounts(r, numAccounts)
 		c.raffleOperation(r)
-		queueRequests <- r
+		qr.Enqueue(r)
 	}
 }
 
 func (c *Client) raffleAccounts(r *Request, numAccounts int) {
-	acc1 := rand.Intn(numAccounts)
-	acc2 := rand.Intn(numAccounts)
+	acc1 := rand.Intn(numAccounts) + 1
+	acc2 := rand.Intn(numAccounts) + 1
 	r.account1 = acc1
 	r.account2 = acc2
 }

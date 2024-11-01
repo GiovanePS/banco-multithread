@@ -5,6 +5,9 @@ import (
 )
 
 func main() {
-	s := server.CreateServerThread(10)
-	s.StartServerThread()
+	var s *server.Server
+	for range 1 {
+		s = server.CreateServerThread(10)
+		s.StartServerThread()
+	}
 }

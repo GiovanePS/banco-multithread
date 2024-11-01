@@ -1,14 +1,18 @@
 package bank
 
-import "fmt"
+import (
+	"fmt"
+	"sync"
+)
 
 type Account struct {
 	id    int
 	saldo float64
+	mutex sync.Mutex
 }
 
 func newAccount(idContador int) *Account {
-	newAccount := &Account{idContador, 0.0}
+	newAccount := &Account{id: idContador, saldo: 0.0}
 	return newAccount
 }
 

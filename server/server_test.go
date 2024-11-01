@@ -5,18 +5,13 @@ import (
 	"testing"
 )
 
-func TestClient(t *testing.T) {
-	t.Run("Testing requests from client", func(t *testing.T) {
-		channel := make(chan *Request)
-		client := Client{}
-		for range 10 {
-			go client.start(channel, 10)
-			fmt.Println(<-channel)
+func TestQueue(t *testing.T) {
+	t.Run("Test enqueue", func(t *testing.T) {
+		queue := &QueueRequests{}
+		for i := range 2 {
+			req := &Request{account1: i}
+			queue.Enqueue(req)
 		}
+		fmt.Println(queue)
 	})
-}
-
-func TestServer(t *testing.T) {
-	server := Server{}
-	server.createThreadPool(10)
 }
