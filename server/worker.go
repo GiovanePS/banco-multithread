@@ -24,12 +24,18 @@ func newWorker() *Worker {
 func (w *Worker) runJob(bank *bank.Bank, request Request) {
 	switch request.operation {
 	case DepositarOuSacar:
-		fmt.Println("Depositando ou sacando...")
-		// bank.DepositarOuSacar(request.account1, float64(request.amount))
+		// fmt.Println("Depositando ou sacando...")
+		err := bank.DepositarOuSacar(request.account1, float64(request.amount))
+		if err != nil {
+			fmt.Println(err)
+		}
 
 	case Transferir:
-		fmt.Println("Transferindo...")
-		// bank.Transferir(request.account1, request.account2, float64(request.amount))
+		// fmt.Println("Transferindo...")
+		err := bank.Transferir(request.account1, request.account2, float64(request.amount))
+		if err != nil {
+			fmt.Println(err)
+		}
 
 	case BalancoGeral:
 		fmt.Println("Balançeando geral...")
