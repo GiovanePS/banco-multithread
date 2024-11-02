@@ -2,6 +2,7 @@ package bank
 
 import (
 	"fmt"
+	"sync"
 	"time"
 )
 
@@ -19,6 +20,7 @@ type Bank struct {
 	id               int
 	headlistAccounts *NodeAccount
 	idCountContas    int
+	mutex            sync.Mutex
 }
 
 type NodeAccount struct {
@@ -60,6 +62,8 @@ func (b *Bank) CreateAccount() *Account {
 }
 
 func (b *Bank) GetAccount(accountId int) (*Account, error) {
+	b.mutex.Lock()
+	defer b.mutex.Unlock()
 	if b.headlistAccounts.account == nil {
 		return nil, fmt.Errorf("Nenhuma conta existente.")
 	}
@@ -88,13 +92,14 @@ func (b *Bank) DepositarOuSacar(accountId int, valor float64) error {
 	acc.mutex.Lock()
 	defer acc.mutex.Unlock()
 	if err != nil {
-		fmt.Println(err)
+		fmt.Errorf("Erro ao buscar conta: " + err.Error())
 		return err
 	}
 
 	if valor <= 0 {
 		err := acc.sacar(valor)
 		if err != nil {
+			fmt.Errorf("Erro ao sacar: " + err.Error())
 			return err
 		}
 
@@ -104,6 +109,7 @@ func (b *Bank) DepositarOuSacar(accountId int, valor float64) error {
 
 	err = acc.depositar(valor)
 	if err != nil {
+		fmt.Errorf("Erro ao depositar: " + err.Error())
 		return err
 	}
 
@@ -126,16 +132,17 @@ func (b *Bank) Transferir(sourceAccount int, destAccount int, valor float64) err
 		return err
 	}
 
-	for {
-		if accSource.mutex.TryLock() {
-			if accDest.mutex.TryLock() {
-				defer accSource.mutex.Unlock()
-				defer accDest.mutex.Unlock()
-				break
-			} else {
-				accSource.mutex.Unlock()
-			}
-		}
+	// Evitar deadlocks
+	if accSource.id < accDest.id {
+		accSource.mutex.Lock()
+		defer accSource.mutex.Unlock()
+		accDest.mutex.Lock()
+		defer accDest.mutex.Unlock()
+	} else {
+		accDest.mutex.Lock()
+		defer accDest.mutex.Unlock()
+		accSource.mutex.Lock()
+		defer accSource.mutex.Unlock()
 	}
 
 	err = accSource.sacar(valor)
@@ -163,8 +170,10 @@ func (b *Bank) BalancoGeral() error {
 	}
 
 	r := b.headlistAccounts
+	r.account.mutex.Lock()
 	for {
 		fmt.Printf("Account ID: %d\tAccount Balance: %.2f\n", r.account.id, r.account.saldo)
+		r.account.mutex.Unlock()
 
 		if r.next == nil {
 			return nil

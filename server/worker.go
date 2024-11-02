@@ -14,17 +14,18 @@ const (
 )
 
 type Worker struct {
-	Mutex sync.Mutex
+	mutex sync.Mutex
 }
 
 func newWorker() *Worker {
 	return &Worker{}
 }
 
-func (w *Worker) runJob(bank *bank.Bank, request *Request) {
+func (w *Worker) runJob(bank *bank.Bank, request Request) {
 	switch request.operation {
 	case DepositarOuSacar:
-		bank.DepositarOuSacar(request.account1, float64(request.amount))
+		fmt.Println("Depositando ou sacando...")
+		// bank.DepositarOuSacar(request.account1, float64(request.amount))
 
 	case Transferir:
 		fmt.Println("Transferindo...")
@@ -33,5 +34,8 @@ func (w *Worker) runJob(bank *bank.Bank, request *Request) {
 	case BalancoGeral:
 		fmt.Println("Balançeando geral...")
 		// bank.BalancoGeral()
+
+	default:
+		fmt.Println("Outra operação")
 	}
 }

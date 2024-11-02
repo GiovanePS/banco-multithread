@@ -6,12 +6,10 @@ import (
 )
 
 type QueueRequests struct {
-	Head         *NodeRequests
-	Tail         *NodeRequests
-	queueMutex   sync.Mutex
-	EnqueueMutex sync.Mutex
-	DequeueMutex sync.Mutex
-	Length       int
+	Head   *NodeRequests
+	Tail   *NodeRequests
+	mutex  sync.Mutex
+	Length int
 }
 
 type NodeRequests struct {
@@ -20,48 +18,37 @@ type NodeRequests struct {
 	Back    *NodeRequests
 }
 
-func (qr *QueueRequests) Enqueue(newRequest *Request) {
-	// Menor que 2 pois variáveis Head e Tail são mexidas nos dois métodos.
-	if qr.Length <= 2 {
-		qr.queueMutex.Lock()
-		defer qr.queueMutex.Unlock()
-	} else {
-		qr.EnqueueMutex.Lock()
-		defer qr.EnqueueMutex.Unlock()
-	}
+func (qr *QueueRequests) Enqueue(newRequest Request) {
+	qr.mutex.Lock()
+	defer qr.mutex.Unlock()
 
+	qr.Length++
 	if qr.Head == nil {
-		newNode := &NodeRequests{Request: newRequest}
+		newNode := &NodeRequests{Request: &newRequest}
 		qr.Head = newNode
 		qr.Tail = newNode
 		return
 	}
 
-	newNode := &NodeRequests{Request: newRequest}
+	newNode := &NodeRequests{Request: &newRequest}
 	newNode.Next = qr.Head
 	qr.Head.Back = newNode
 	qr.Head = newNode
-	qr.Length++
 }
 
-func (qr *QueueRequests) Dequeue() (*Request, error) {
-	if qr.Length <= 2 {
-		qr.queueMutex.Lock()
-		defer qr.queueMutex.Unlock()
-	} else {
-		qr.DequeueMutex.Lock()
-		defer qr.DequeueMutex.Unlock()
-	}
+func (qr *QueueRequests) Dequeue() (Request, error) {
+	qr.mutex.Lock()
+	defer qr.mutex.Unlock()
 
 	// Se não houver nenhum node
 	if qr.Head == nil {
-		return nil, fmt.Errorf("Não há nodes para remover.")
+		return Request{}, fmt.Errorf("Não há nodes para remover.")
 	}
 
 	qr.Length--
 	// Se houver apenas um Node
 	if qr.Head == qr.Tail {
-		request := qr.Head.Request
+		request := *qr.Head.Request
 		qr.Head = nil
 		qr.Tail = nil
 		return request, nil
@@ -71,10 +58,13 @@ func (qr *QueueRequests) Dequeue() (*Request, error) {
 	qr.Tail = qr.Tail.Back
 	qr.Tail.Next = nil
 	temp.Back = nil
-	return temp.Request, nil
+	request := *temp.Request
+	return request, nil
 }
 
 func (qr *QueueRequests) String() string {
+	qr.mutex.Lock()
+	defer qr.mutex.Unlock()
 	output := "["
 	runner := qr.Head
 

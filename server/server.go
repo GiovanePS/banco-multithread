@@ -6,31 +6,31 @@ import (
 	"github.com/GiovanePS/banco-multithread/bank"
 )
 
-const maxRequests = 50
-
-var CONTINUE = true
-
 type Server struct {
 	bank          *bank.Bank
 	workers       []*Worker
 	numWorkers    int
 	clients       []*Client
+	numClients    int
 	queueRequests *QueueRequests
 	numAccounts   int
+	numRequests   int
 }
 
-func CreateServerThread(numAgents int) *Server {
+func CreateServerThread(numWorkers, numClients, numAccounts, numRequests int) *Server {
 	s := &Server{
 		bank:          bank.NewBank(),
-		workers:       make([]*Worker, numAgents),
-		numWorkers:    numAgents,
-		clients:       make([]*Client, numAgents),
+		workers:       make([]*Worker, numWorkers),
+		numWorkers:    numWorkers,
+		clients:       make([]*Client, numClients),
+		numClients:    numClients,
 		queueRequests: &QueueRequests{},
-		numAccounts:   10,
+		numAccounts:   numAccounts,
+		numRequests:   numRequests,
 	}
 
-	s.createThreadPool(numAgents)
-	s.createBankAccounts(numAgents)
+	s.createThreadPool(numWorkers)
+	s.createBankAccounts(numAccounts)
 	return s
 }
 
@@ -47,47 +47,58 @@ func (s *Server) createThreadPool(numWorkers int) {
 }
 
 func (s *Server) StartServerThread() {
-	var wg sync.WaitGroup
+	getRequest := func() (Request, error) {
+		request, err := s.queueRequests.Dequeue()
+		return request, err
+	}
 
-	// Setting up clients
+	turnWorker := 0
+	getAvailableWorker := func() *Worker {
+		for {
+			worker := s.workers[turnWorker%s.numWorkers]
+			turnWorker++
+			if worker.mutex.TryLock() {
+				return worker
+			}
+		}
+	}
+
+	// Starting clients
+	var wg sync.WaitGroup
 	for _, client := range s.clients {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			client.start(s.queueRequests, s.numAccounts)
+			for i := 0; i < s.numRequests; i++ {
+				client.send(s.queueRequests, s.numAccounts)
+			}
 		}()
 	}
 
-	requestCount := 0
-
-	// Setting up workers
-	turnCount := 0
-	for {
-		request, err := s.queueRequests.Dequeue()
-		if err == nil {
-			worker := s.workers[turnCount%s.numWorkers]
-			for range 10 {
-				if worker.Mutex.TryLock() {
-					wg.Add(1)
-					go func() {
-						defer wg.Done()
-						worker.runJob(s.bank, request)
-						worker.Mutex.Unlock()
-					}()
-					turnCount++
+	// Stating handle
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for handledRequests := 0; handledRequests < s.numClients*s.numRequests; handledRequests++ {
+			var request Request
+			for {
+				var err error
+				request, err = getRequest()
+				// Há requests para executar
+				if err == nil {
 					break
 				}
 			}
 
-			requestCount++
+			worker := getAvailableWorker()
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				worker.runJob(s.bank, request)
+				worker.mutex.Unlock()
+			}()
 		}
-
-		if requestCount == maxRequests {
-			CONTINUE = false
-			break
-		}
-	}
+	}()
 
 	wg.Wait()
-	CONTINUE = true
 }
