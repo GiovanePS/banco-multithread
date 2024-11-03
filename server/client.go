@@ -37,7 +37,7 @@ func (c *Client) raffleAccounts(r *Request, numAccounts int) {
 }
 
 func (c *Client) raffleOperation(r *Request) {
-	numOperations := 3
+	numOperations := 2
 	r.operation = rand.Intn(numOperations) + 1
 	value := 1000
 	r.amount = rand.Intn(value*2) - value // Entre -1000 a 1000

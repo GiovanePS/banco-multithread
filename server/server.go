@@ -95,7 +95,14 @@ func (s *Server) StartServerThread() {
 			mutexClientsRunning.Lock()
 			s.clientsRunning--
 			mutexClientsRunning.Unlock()
+			// Notificar que finalizou
+			cond.Signal()
 		}()
+	}
+
+	sendBalanceRequest := func() {
+		r := Request{operation: 3}
+		s.queueRequests.Enqueue(r)
 	}
 
 	clientAreNotRunning := func() bool {
@@ -109,6 +116,7 @@ func (s *Server) StartServerThread() {
 	}
 
 	// Stating main thread
+	countRequests := 1
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -118,13 +126,17 @@ func (s *Server) StartServerThread() {
 			}
 
 			cond.L.Lock()
-			for queueIsEmpty() {
+			for queueIsEmpty() && !clientAreNotRunning() {
 				cond.Wait()
 			}
 			cond.L.Unlock()
 
-			request, _ := getRequest()
+			if countRequests%10 == 0 {
+				sendBalanceRequest()
+			}
+			countRequests++
 
+			request, _ := getRequest()
 			worker := getAvailableWorker()
 			wg.Add(1)
 			go func() {
