@@ -166,6 +166,7 @@ func (b *Bank) Transferir(sourceAccount int, destAccount int, valor float64) err
 		return fmt.Errorf("Erro ao transferir: %s", err)
 	}
 
+	valor = -valor
 	fmt.Printf("Transferência: %d -> %d : %f\n", accSource.id, accDest.id, valor)
 	return nil
 }
