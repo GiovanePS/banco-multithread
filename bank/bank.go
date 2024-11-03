@@ -6,6 +6,9 @@ import (
 	"time"
 )
 
+var balancing = false
+var cond = sync.NewCond(&sync.Mutex{})
+
 // Tempo em milisegundos
 var (
 	delayOfDepositarOuSacar = 200
@@ -34,10 +37,6 @@ func NewBank() *Bank {
 	}
 
 	return newBank
-}
-
-func (b *Bank) Id() int {
-	return b.id
 }
 
 func (b *Bank) CreateAccount() *Account {
@@ -89,6 +88,11 @@ func (b *Bank) GetAccount(accountId int) (*Account, error) {
 func (b *Bank) DepositarOuSacar(accountId int, valor float64) error {
 	time.Sleep(time.Millisecond * time.Duration(delayOfDepositarOuSacar))
 	acc, err := b.GetAccount(accountId)
+	cond.L.Lock()
+	for balancing {
+		cond.Wait()
+	}
+	cond.L.Unlock()
 	acc.mutex.Lock()
 	defer acc.mutex.Unlock()
 	if err != nil {
@@ -132,7 +136,13 @@ func (b *Bank) Transferir(sourceAccount int, destAccount int, valor float64) err
 		return err
 	}
 
-	// Evitar deadlocks
+	cond.L.Lock()
+	for balancing {
+		cond.Wait()
+	}
+	cond.L.Unlock()
+
+	// Evitar deadlocks de operações usando contas inversas
 	if accSource.id < accDest.id {
 		accSource.mutex.Lock()
 		defer accSource.mutex.Unlock()
@@ -169,13 +179,17 @@ func (b *Bank) BalancoGeral() error {
 		return fmt.Errorf("Nenhuma conta existente.")
 	}
 
+	balancing = true
 	r := b.headlistAccounts
-	r.account.mutex.Lock()
+	fmt.Println("Balanço geral: ")
 	for {
+		r.account.mutex.Lock()
 		fmt.Printf("Account ID: %d\tAccount Balance: %.2f\n", r.account.id, r.account.saldo)
 		r.account.mutex.Unlock()
 
 		if r.next == nil {
+			balancing = false
+			cond.Broadcast()
 			return nil
 		}
 

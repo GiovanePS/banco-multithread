@@ -38,8 +38,10 @@ func (w *Worker) runJob(bank *bank.Bank, request Request) {
 		}
 
 	case BalancoGeral:
-		fmt.Println("Balançeando geral...")
-		// bank.BalancoGeral()
+		err := bank.BalancoGeral()
+		if err != nil {
+			fmt.Println(err)
+		}
 
 	default:
 		fmt.Println("Outra operação")
