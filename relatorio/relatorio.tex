@@ -48,8 +48,9 @@ O trabalho solicitado consiste na implementação de um servidor multithreaded p
 \section*{Decisões de Implementação}
 A implementação foi realizada em \textbf{Golang} 1.23, utilizando apenas módulos da biblioteca padrão, em principal "\textit{sync}"
 para toda a estrutura não sequencial, portanto, não é necessária a instalação de nenhum pacote adicional. Pensamos
-em utilizar semáforos para controle de workers livres, porém em Go, a forma oficial é com channels, que implementa
-dentro de si o controle de concorrência, o que era uma limitação estabelecida na definição do trabalho.
+em utilizar semáforos para controle de workers livres, porém em Go a forma oficial é com channels, que implementa
+dentro de si o controle de concorrência, o que era uma limitação estabelecida na definição do trabalho, portanto,
+decidimos por utilizar mutex e condition em toda estrutura de sincronização.
 
 Foram esclhidas quatro parametrizações principais:
 \textbf{número de threads trabalhadoras}, \textbf{número de clientes}, \textbf{número máximo de requisições}
