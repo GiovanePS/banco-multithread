@@ -73,9 +73,12 @@ func (s *Server) StartServerThread() {
 		for {
 			worker := s.workers[turnWorker%s.numWorkers]
 			turnWorker++
-			if worker.mutex.TryLock() {
+			worker.mutex.Lock()
+			if !worker.isRunning {
+				worker.isRunning = true
 				return worker
 			}
+			worker.mutex.Unlock()
 		}
 	}
 
@@ -115,7 +118,7 @@ func (s *Server) StartServerThread() {
 		return true
 	}
 
-	// Stating main thread
+	// Starting main thread
 	countRequests := 1
 	wg.Add(1)
 	go func() {
@@ -142,6 +145,7 @@ func (s *Server) StartServerThread() {
 			go func() {
 				defer wg.Done()
 				worker.runJob(s.bank, request)
+				worker.isRunning = false
 				worker.mutex.Unlock()
 			}()
 		}

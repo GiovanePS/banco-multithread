@@ -14,7 +14,8 @@ const (
 )
 
 type Worker struct {
-	mutex sync.Mutex
+	mutex     sync.Mutex
+	isRunning bool
 }
 
 func newWorker() *Worker {

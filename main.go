@@ -10,7 +10,7 @@ import (
 
 func main() {
 	if len(os.Args) != 5 {
-		fmt.Println("Usage: go run [numWorkers] [numClients] [maxRequests] [serviceTimeInSeconds]")
+		fmt.Println("Usage: go run [numWorkers] [numClients] [maxRequests] [serviceTimeInMiliseconds]")
 		os.Exit(1)
 	}
 	numWorkers, _ := strconv.Atoi(os.Args[1])
