@@ -6,16 +6,19 @@ import (
 	"github.com/GiovanePS/banco-multithread/bank"
 )
 
+var cond = sync.NewCond(&sync.Mutex{})
+
 type Server struct {
-	bank          *bank.Bank
-	workers       []*Worker
-	numWorkers    int
-	clients       []*Client
-	numClients    int
-	queueRequests *QueueRequests
-	numAccounts   int
-	numRequests   int
-	serviceTime   int
+	bank           *bank.Bank
+	workers        []*Worker
+	numWorkers     int
+	clients        []*Client
+	clientsRunning int
+	numClients     int
+	queueRequests  *QueueRequests
+	numAccounts    int
+	numRequests    int
+	serviceTime    int
 }
 
 func CreateServerThread(numWorkers, numClients, numRequests, serviceTime int) *Server {
@@ -54,6 +57,17 @@ func (s *Server) StartServerThread() {
 		return request, err
 	}
 
+	queueIsEmpty := func() bool {
+		s.queueRequests.mutex.Lock()
+		defer s.queueRequests.mutex.Unlock()
+		numReqs := s.queueRequests.Length
+		if numReqs > 0 {
+			return false
+		}
+
+		return true
+	}
+
 	turnWorker := 0
 	getAvailableWorker := func() *Worker {
 		for {
@@ -66,31 +80,50 @@ func (s *Server) StartServerThread() {
 	}
 
 	// Starting clients
+	mutexClientsRunning := sync.Mutex{}
 	var wg sync.WaitGroup
 	for _, client := range s.clients {
 		wg.Add(1)
+		mutexClientsRunning.Lock()
+		s.clientsRunning++
+		mutexClientsRunning.Unlock()
 		go func() {
 			defer wg.Done()
 			for i := 0; i < s.numRequests; i++ {
 				client.send(s.queueRequests, s.numAccounts)
 			}
+			mutexClientsRunning.Lock()
+			s.clientsRunning--
+			mutexClientsRunning.Unlock()
 		}()
 	}
 
-	// Stating handle
+	clientAreNotRunning := func() bool {
+		mutexClientsRunning.Lock()
+		defer mutexClientsRunning.Unlock()
+		if s.clientsRunning > 0 {
+			return false
+		}
+
+		return true
+	}
+
+	// Stating main thread
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		for handledRequests := 0; handledRequests < s.numClients*s.numRequests; handledRequests++ {
-			var request Request
-			for {
-				var err error
-				request, err = getRequest()
-				// Há requests para executar
-				if err == nil {
-					break
-				}
+		for {
+			if queueIsEmpty() && clientAreNotRunning() {
+				break
 			}
+
+			cond.L.Lock()
+			for queueIsEmpty() {
+				cond.Wait()
+			}
+			cond.L.Unlock()
+
+			request, _ := getRequest()
 
 			worker := getAvailableWorker()
 			wg.Add(1)

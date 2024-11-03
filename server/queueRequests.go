@@ -34,6 +34,7 @@ func (qr *QueueRequests) Enqueue(newRequest Request) {
 	newNode.Next = qr.Head
 	qr.Head.Back = newNode
 	qr.Head = newNode
+	cond.Signal()
 }
 
 func (qr *QueueRequests) Dequeue() (Request, error) {
