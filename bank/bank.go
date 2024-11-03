@@ -9,13 +9,6 @@ import (
 var balancing = false
 var cond = sync.NewCond(&sync.Mutex{})
 
-// Tempo em milisegundos
-var (
-	delayOfDepositarOuSacar = 200
-	delayOfTransferir       = 300
-	delayOfBalancoGeral     = 500
-)
-
 // O serviço deve manter informação sobre contas de usuários. Cada conta
 // de usuário tem um identificador da conta (um número inteiro positivo)
 // e um saldo atual (um número real, que pode ser positivo ou negativo).
@@ -23,6 +16,7 @@ type Bank struct {
 	id               int
 	headlistAccounts *NodeAccount
 	idCountContas    int
+	serviceTime      time.Duration // Em segundos
 	mutex            sync.Mutex
 }
 
@@ -31,9 +25,10 @@ type NodeAccount struct {
 	next    *NodeAccount
 }
 
-func NewBank() *Bank {
+func NewBank(serviceTime int) *Bank {
 	newBank := &Bank{
 		headlistAccounts: &NodeAccount{},
+		serviceTime:      time.Duration(serviceTime),
 	}
 
 	return newBank
@@ -86,7 +81,7 @@ func (b *Bank) GetAccount(accountId int) (*Account, error) {
 // que esta operação pode ser executada tanto para depósitos quanto saques,
 // dependendo se o valor de depósito é positivo ou negativo;
 func (b *Bank) DepositarOuSacar(accountId int, valor float64) error {
-	time.Sleep(time.Millisecond * time.Duration(delayOfDepositarOuSacar))
+	time.Sleep(b.serviceTime * time.Second)
 	acc, err := b.GetAccount(accountId)
 	cond.L.Lock()
 	for balancing {
@@ -125,7 +120,7 @@ func (b *Bank) DepositarOuSacar(accountId int, valor float64) error {
 // operação deve debitar o valor de transferência da conta de origem e somar este
 // valor na conta destino;
 func (b *Bank) Transferir(sourceAccount int, destAccount int, valor float64) error {
-	time.Sleep(time.Millisecond * time.Duration(delayOfTransferir))
+	time.Sleep(b.serviceTime * time.Second)
 	accSource, err := b.GetAccount(sourceAccount)
 	if err != nil {
 		return err
@@ -175,7 +170,7 @@ func (b *Bank) Transferir(sourceAccount int, destAccount int, valor float64) err
 // conta e o seu respectivo valor no momento em que a operação foi inicializada.
 // Note que o balanço geral apresenta uma “fotografia” instantânea do estado das contas.
 func (b *Bank) BalancoGeral() error {
-	time.Sleep(time.Millisecond * time.Duration(delayOfBalancoGeral))
+	time.Sleep(b.serviceTime * time.Second)
 	if b.headlistAccounts.account == nil {
 		return fmt.Errorf("Nenhuma conta existente.")
 	}

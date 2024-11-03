@@ -15,22 +15,24 @@ type Server struct {
 	queueRequests *QueueRequests
 	numAccounts   int
 	numRequests   int
+	serviceTime   int
 }
 
-func CreateServerThread(numWorkers, numClients, numAccounts, numRequests int) *Server {
+func CreateServerThread(numWorkers, numClients, numRequests, serviceTime int) *Server {
 	s := &Server{
-		bank:          bank.NewBank(),
+		bank:          bank.NewBank(serviceTime),
 		workers:       make([]*Worker, numWorkers),
 		numWorkers:    numWorkers,
 		clients:       make([]*Client, numClients),
 		numClients:    numClients,
 		queueRequests: &QueueRequests{},
-		numAccounts:   numAccounts,
+		numAccounts:   numClients,
 		numRequests:   numRequests,
+		serviceTime:   serviceTime,
 	}
 
 	s.createThreadPool(numWorkers)
-	s.createBankAccounts(numAccounts)
+	s.createBankAccounts(numClients)
 	return s
 }
 
